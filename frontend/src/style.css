@@ -181,3 +181,14 @@ th { color: var(--bg-dim); font-weight: 600; font-size: 0.78rem; }
   position: absolute; top: 8px; width: 10px; height: 32px;
   border-radius: 2px; transform: translateX(-50%);
 }
+
+/* 线路页：三参改写 / 新建表单 */
+.ln-edit-row input { width: 5.2rem; }
+.ln-create { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: flex-start; }
+.ln-create label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.78rem; color: var(--bg-dim); }
+.ln-create input { width: 7.5rem; }
+.ln-create .btn { align-self: flex-end; }
+input.invalid { border-color: var(--bg-red); outline: 1px solid var(--bg-red); }
+.ln-err { color: var(--bg-red); font-size: 0.72rem; max-width: 15rem; }
+.ln-ok { color: var(--bg-ok); font-size: 0.78rem; align-self: center; }
+.ln-cancel { background: var(--bg-edge); color: var(--bg-text); margin-left: 0.4rem; }

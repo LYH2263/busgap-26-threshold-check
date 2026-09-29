@@ -1,10 +1,18 @@
 from datetime import datetime
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
+# 库侧兜底约束，名称与 migrations/0001_line_param_checks.sql 保持一致：
+# 即使绕过接口直插库，非法三参也会被 PostgreSQL 拒绝。
 class Line(Base):
     __tablename__ = "lines"
+    __table_args__ = (
+        CheckConstraint("planned_headway_min > 0", name="lines_planned_headway_positive"),
+        CheckConstraint("bunch_threshold > 0", name="lines_bunch_threshold_positive"),
+        CheckConstraint("bunch_threshold < planned_headway_min", name="lines_bunch_below_headway"),
+        CheckConstraint("large_threshold > planned_headway_min", name="lines_large_above_headway"),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     code: Mapped[str] = mapped_column(String(32), unique=True)
     name: Mapped[str] = mapped_column(String(128))
