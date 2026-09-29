@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -11,6 +11,15 @@ class Line(Base):
     planned_headway_min: Mapped[float] = mapped_column(Float, default=8.0)
     bunch_threshold: Mapped[float] = mapped_column(Float, default=3.0)
     large_threshold: Mapped[float] = mapped_column(Float, default=15.0)
+    # 与 app.services.line_validation 保持同一套规则的库侧兜底：
+    # 班距计划 > 0；近车阈 ∈ (0, 班距计划)；疏车阈 > 班距计划。
+    __table_args__ = (
+        CheckConstraint("planned_headway_min > 0", name="ck_lines_headway_positive"),
+        CheckConstraint("bunch_threshold > 0 AND bunch_threshold < planned_headway_min",
+                        name="ck_lines_bunch_open_range"),
+        CheckConstraint("large_threshold > planned_headway_min",
+                        name="ck_lines_large_above_headway"),
+    )
     trips: Mapped[list["Trip"]] = relationship(back_populates="line")
 
 class Trip(Base):

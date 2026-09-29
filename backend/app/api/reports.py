@@ -6,7 +6,17 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Arrival, BunchReport, Line, Trip
 from app.services.bunch_engine import detect_bunching, events_to_dicts
+from app.services.line_validation import errors_to_dicts, validate_line_params
 router = APIRouter(prefix="/reports", tags=["reports"])
+
+def _require_line_detectable(line: Line) -> None:
+    """进检测引擎前的最后一道闸：库内参数非法时绝不跑引擎、绝不落报告行。"""
+    errors = validate_line_params(line.planned_headway_min, line.bunch_threshold, line.large_threshold)
+    if errors:
+        raise HTTPException(status_code=422, detail={
+            "message": "线路参数校验未通过，已阻止检测",
+            "errors": errors_to_dicts(errors),
+        })
 
 @router.get("")
 def list_reports(db: Session = Depends(get_db)):
@@ -18,6 +28,7 @@ def list_reports(db: Session = Depends(get_db)):
 def run_detection(line_id: int, stop_name: str | None = None, db: Session = Depends(get_db)):
     line = db.get(Line, line_id)
     if not line: raise HTTPException(404, "线路不存在")
+    _require_line_detectable(line)
     trips = db.scalars(select(Trip).where(Trip.line_id == line_id)).all()
     trip_ids = [t.id for t in trips]
     trip_no_map = {t.id: t.trip_no for t in trips}
